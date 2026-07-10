@@ -46,7 +46,7 @@ ported from it.
 | 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | DONE 2026-07-10 |
 | 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | DONE 2026-07-10 |
 | 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | DONE 2026-07-11 |
-| 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | pending |
+| 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | DONE 2026-07-11 |
 
 ## Dataset record (SFCHD)
 
@@ -145,6 +145,19 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
   requirements.txt from scratch). Stale absolute path: `scripts/prepare_data.py`
   `DEFAULT_REFERENCE` still points at `/Users/abhi/dev/PPE-detection` — pass
   `--reference` explicitly if that path no longer exists.
+
+## Phase 6 record
+
+- Multi-stage Dockerfile: python:3.11-slim digest-pinned, CPU torch wheels from the
+  pytorch index (default index would pull CUDA deps), weights fetched at build via
+  get_weights.py so the sha256 check gates the image. `docker run -p 8000:8000
+  ppe-detect` serves self-contained (verified locally, image 2.31 GB).
+- CI (.github/workflows/ci.yml): lint-test job (ruff + stubbed suite) and integration
+  job (release weights, integration tests, docker build, container /healthz + /detect
+  smoke). First run green in 2m15s (run 29127720879).
+- Repo hygiene: prepare_data.py --reference required (personal path default removed);
+  results/data_provenance.md records archive sha256 + 100% reconciliation.
+- No registry publishing — build-locally only, per user instruction.
 
 ## Key decisions
 
