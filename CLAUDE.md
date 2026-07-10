@@ -41,7 +41,7 @@ label files and dataset layout, never modified, and no code is ported from it.
 |-------|-------|------------------------|--------|
 | 1 | Scaffold + pinned env + stock-weights CPU inference | `python -m ppe_detect.cli assets/sample.jpg` writes annotated image on CPU from fresh clone | DONE 2026-07-10 |
 | 2a | Dataset verified + train.py smoke-tested on MPS + full-run command documented | Micro-run (1 epoch, ~100 imgs) completes on MPS; reconciliation ≥98% | DONE 2026-07-10 |
-| 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | pending user training run |
+| 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | DONE 2026-07-10 |
 | 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | pending |
 | 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | pending |
 | 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | pending |
@@ -78,6 +78,18 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
    `sed -i 's|/Users/abhi/dev/ppe-detect/data/sfchd|/kaggle/input/sfchd|g' train.txt val.txt sfchd.yaml`
 3. `pip install ultralytics==8.4.91`, copy `scripts/train.py`, run with
    `--device 0 --epochs 50 --batch 16`, then download `best.pt` into `runs/sfchd-y8n/weights/`.
+
+## Trained weights record
+
+- Run: `runs/sfchd-y8n` — YOLOv8n, 25 epochs, imgsz 640, batch 16, MPS, seed 42,
+  wall time ~5.8 h (user-executed 2026-07-10).
+- Final-epoch validation (full 2,475-image val split): **mAP50 0.746, mAP50-95 0.473,
+  precision 0.782, recall 0.716** (per-class table comes from the Phase 3 harness).
+- Published: https://github.com/abhipabhi/ppe-detect/releases/tag/weights-v1
+  asset `ppe-detect-y8n-sfchd.pt`, sha256 `ed20fd001d5dfef61c738928c799201d3323f2c5148e3d0dfa0c521263d28870`.
+- Out-of-domain caveat: on non-CCTV photos (e.g. the CC0 sample) confidence drops and
+  classes can shift toward `head`/`self_clothes` — SFCHD is chemical-plant CCTV footage;
+  document under README limitations.
 
 ## Key decisions
 
