@@ -42,7 +42,7 @@ label files and dataset layout, never modified, and no code is ported from it.
 | 1 | Scaffold + pinned env + stock-weights CPU inference | `python -m ppe_detect.cli assets/sample.jpg` writes annotated image on CPU from fresh clone | DONE 2026-07-10 |
 | 2a | Dataset verified + train.py smoke-tested on MPS + full-run command documented | Micro-run (1 epoch, ~100 imgs) completes on MPS; reconciliation ≥98% | DONE 2026-07-10 |
 | 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | DONE 2026-07-10 |
-| 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | pending |
+| 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | DONE 2026-07-10 |
 | 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | pending |
 | 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | pending |
 | 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | pending |
@@ -90,6 +90,27 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
 - Out-of-domain caveat: on non-CCTV photos (e.g. the CC0 sample) confidence drops and
   classes can shift toward `head`/`self_clothes` — SFCHD is chemical-plant CCTV footage;
   document under README limitations.
+
+## Evaluation record (Phase 3)
+
+- `scripts/evaluate.py` regenerates `results/metrics.md` end-to-end (standard eval +
+  pre-registered low-light A/B); headline reproduced exactly (mAP50 0.746 / mAP50-95 0.473).
+- Strong classes: person 0.961, safety_clothes 0.942, helmet 0.921 mAP50; weak: blur_head
+  0.426, blur_clothes 0.468 (tiny, blurred instances — consistent with upstream findings).
+- Low-light A/B (gamma 2.0–3.0 seed 42, pre-registered): darkening drops overall mAP50 to
+  0.642; CLAHE recovers **+0.004 mAP50 overall (−0.001 mAP50-95)** — marginal; small gains
+  on person/helmet/safety_clothes, losses on head/blur_head. Reported as-is; README must
+  present CLAHE as a preprocessing *option* with near-neutral measured effect, not a win.
+
+## License record
+
+- This repo: MIT (`LICENSE`, © 2026 Abhi Patidar).
+- SFCHD dataset / upstream SFCHD-SCALE repo (github.com/lijfrank-open/SFCHD-SCALE):
+  **no explicit license anywhere** (repo has no LICENSE file/badge; the IEEE T-ASE paper
+  says "dataset and code are publicly available", collection was de-identified; no
+  research-only or non-commercial clause found). Consequences: we do not redistribute
+  dataset images (already enforced); trained weights + aggregate metrics are shared with
+  dataset credit in README and release notes. Flagged to user at Phase 3 STOP.
 
 ## Key decisions
 

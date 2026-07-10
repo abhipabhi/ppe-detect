@@ -50,6 +50,16 @@ Without `--weights`, the CLI defaults to stock COCO `yolov8n.pt` (auto-downloade
 by ultralytics on first run), which detects generic classes such as `person` —
 useful to verify the pipeline end to end.
 
+## Dataset credit
+
+Trained and evaluated on the **SFCHD** dataset (Safety Clothing and Helmet Detection;
+12,372 chemical-plant CCTV images, 7 classes) published by Yu, Li, et al. (HUST),
+*"Large, Complex, and Realistic Safety Clothing and Helmet Detection: Dataset and
+Method"* — [github.com/lijfrank-open/SFCHD-SCALE](https://github.com/lijfrank-open/SFCHD-SCALE).
+The dataset's authors state it is publicly available; it carries no explicit license,
+so no dataset images are redistributed in this repository — only trained weights and
+aggregate metrics.
+
 ## Tests
 
 ```bash
