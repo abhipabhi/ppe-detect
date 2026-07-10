@@ -43,7 +43,7 @@ label files and dataset layout, never modified, and no code is ported from it.
 | 2a | Dataset verified + train.py smoke-tested on MPS + full-run command documented | Micro-run (1 epoch, ~100 imgs) completes on MPS; reconciliation ≥98% | DONE 2026-07-10 |
 | 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | DONE 2026-07-10 |
 | 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | DONE 2026-07-10 |
-| 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | pending |
+| 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | DONE 2026-07-10 |
 | 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | pending |
 | 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | pending |
 
@@ -111,6 +111,23 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
   research-only or non-commercial clause found). Consequences: we do not redistribute
   dataset images (already enforced); trained weights + aggregate metrics are shared with
   dataset credit in README and release notes. Flagged to user at Phase 3 STOP.
+
+## API record (Phase 4)
+
+- `ppe_detect.api:create_app` factory; run `uvicorn --factory ppe_detect.api:create_app`.
+  Model loads once in the lifespan hook (`Detector.load()`), never per-request.
+- Annotated image via `?output=image` query param on POST /detect (chosen over a second
+  endpoint: one route, one upload path, content negotiated explicitly).
+- Failure paths tested: non-image/corrupt/empty upload → 400 JSON, oversized → 413
+  (cap `PPE_MAX_UPLOAD_MB`, default 10 MB), bad query values → 422. No 500s on bad input.
+- `GET /healthz` returns weights filename + sha256 (verified live = release asset hash).
+- `scripts/get_weights.py` downloads the release asset and verifies the recorded sha256
+  (uses certifi CA bundle — macOS framework Pythons ship without root certs).
+- Default test suite uses a stubbed detector; `pytest -m integration` covers real weights
+  end-to-end (auto-skips if weights absent).
+- License posture (user decision 2026-07-10): publish as-is; provenance note on release
+  and README weights section — research/evaluation use, dataset uncredited-license caveat
+  for commercial users. Code MIT.
 
 ## Key decisions
 

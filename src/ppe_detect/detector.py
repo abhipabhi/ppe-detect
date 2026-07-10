@@ -64,6 +64,11 @@ class Detector:
             self._model = YOLO(self.config.weights)
         return self._model
 
+    def load(self) -> "Detector":
+        """Force model construction now (e.g. at service startup)."""
+        _ = self.model
+        return self
+
     def detect(self, image_bgr: np.ndarray) -> list[Detection]:
         results = self.model.predict(
             image_bgr,

@@ -14,6 +14,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
+python scripts/get_weights.py   # fetch released PPE weights (sha256-verified)
 ```
 
 ## Usage
@@ -44,11 +45,42 @@ ppe-detect image.jpg --weights ppe-detect-y8n-sfchd.pt
 ```
 
 Validation on the 2,475-image held-out split: mAP50 0.746, mAP50-95 0.473
-(25 epochs, imgsz 640; full per-class table lands with the evaluation harness).
+(25 epochs, imgsz 640; per-class table in [results/metrics.md](results/metrics.md)).
+
+**Weights provenance:** trained on the SFCHD dataset (Yu, Li, et al., IEEE T-ASE;
+see Dataset credit below). The dataset carries no explicit license; the weights are
+shared for research and evaluation with credit to the dataset authors — commercial
+users should verify dataset rights independently. Code in this repo is MIT.
 
 Without `--weights`, the CLI defaults to stock COCO `yolov8n.pt` (auto-downloaded
 by ultralytics on first run), which detects generic classes such as `person` —
 useful to verify the pipeline end to end.
+
+## API
+
+Serve detections over HTTP (model loads once at startup):
+
+```bash
+uvicorn --factory ppe_detect.api:create_app --port 8000
+```
+
+```bash
+# JSON detections
+curl -F image=@assets/sample.jpg "http://127.0.0.1:8000/detect?enhance=auto"
+# → {"boxes": [...], "classes": [...], "confidences": [...], "enhanced": false,
+#    "timing": {"inference_ms": ...}, "image": {"width": ..., "height": ...}}
+
+# annotated JPEG instead of JSON
+curl -F image=@assets/sample.jpg "http://127.0.0.1:8000/detect?output=image" -o out.jpg
+
+# liveness + which weights are being served
+curl http://127.0.0.1:8000/healthz
+```
+
+Query parameters: `enhance=auto|on|off` (CLAHE preprocessing, same semantics as the
+CLI), `output=json|image`. Bad inputs return JSON errors: non-image/corrupt upload
+→ 400, payload over the cap (`PPE_MAX_UPLOAD_MB`, default 10 MB) → 413. Weights
+path is configurable via `PPE_WEIGHTS`.
 
 ## Dataset credit
 

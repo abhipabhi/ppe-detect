@@ -13,6 +13,10 @@ dependencies = [
     "ultralytics",
     "opencv-python",
     "numpy",
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "certifi",
 ]
 
 [project.scripts]
