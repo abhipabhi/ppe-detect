@@ -27,6 +27,7 @@ from ppe_detect.sfchd import (
     collect_image_stems,
     parse_split_file,
     reconcile,
+    redundant_splits,
     write_dataset_yaml,
     write_split_list,
 )
@@ -79,7 +80,8 @@ def main() -> int:
 
     # per-split reconciliation and local split lists
     print("--- per-split ---")
-    splits: dict[str, str] = {}
+    usable: dict[str, list[str]] = {}
+    members: dict[str, set[str]] = {}
     for split in ("train", "val", "test"):
         split_file = splits_src / f"{split}.txt"
         if not split_file.exists():
@@ -89,6 +91,14 @@ def main() -> int:
         present = [image_stems[s] for s in wanted if s in image_stems and s in label_stems]
         missing = len(wanted) - len(present)
         print(f"{split}: {len(wanted)} listed, {len(present)} usable, {missing} missing")
+        usable[split] = present
+        members[split] = {s for s in wanted if s in image_stems}
+
+    splits: dict[str, str] = {}
+    for split, present in usable.items():
+        if split in redundant_splits(members):
+            print(f"{split}: subset of another split — dropped as redundant")
+            continue
         list_path = args.dataset_root / f"{split}.txt"
         write_split_list(list_path, images_dir, present)
         splits[split] = f"{split}.txt"

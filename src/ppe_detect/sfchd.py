@@ -81,6 +81,23 @@ def collect_image_stems(images_dir: Path) -> dict[str, str]:
     return stems
 
 
+def redundant_splits(split_members: dict[str, set[str]]) -> list[str]:
+    """Names of splits whose members are fully contained in another split.
+
+    The upstream SFCHD test list is a 6-image subset of val — a leftover, not a
+    real split. Keeping it would imply an evaluation set that doesn't exist.
+    """
+    redundant = []
+    for name, members in split_members.items():
+        if not members:
+            continue
+        for other_name, other_members in split_members.items():
+            if other_name != name and members <= other_members:
+                redundant.append(name)
+                break
+    return redundant
+
+
 def write_split_list(path: Path, images_dir: Path, filenames: list[str]) -> None:
     path.write_text("".join(f"{(images_dir / name).resolve()}\n" for name in sorted(filenames)))
 

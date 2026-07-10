@@ -40,11 +40,44 @@ label files and dataset layout, never modified, and no code is ported from it.
 | Phase | Scope | Exit criteria (binary) | Status |
 |-------|-------|------------------------|--------|
 | 1 | Scaffold + pinned env + stock-weights CPU inference | `python -m ppe_detect.cli assets/sample.jpg` writes annotated image on CPU from fresh clone | DONE 2026-07-10 |
-| 2 | Dataset acquisition (SFCHD primary) + fine-tune YOLOv8n | `best.pt` produces PPE-class detections on sample images | pending |
+| 2a | Dataset verified + train.py smoke-tested on MPS + full-run command documented | Micro-run (1 epoch, ~100 imgs) completes on MPS; reconciliation ≥98% | DONE 2026-07-10 |
+| 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | pending user training run |
 | 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | pending |
 | 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | pending |
 | 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | pending |
 | 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | pending |
+
+## Dataset record (SFCHD)
+
+- Source: Google Drive `https://drive.google.com/file/d/1-2z7r3J4sZdLvVt5mllvSEwAFO49Y-zj/view` (link from the upstream SFCHD-SCALE README); downloaded 2026-07-10 via gdown 6.1.0.
+- Archive: `SFCHD.zip`, 1.8 GB, sha256 `cbbb8aa20e556b9736b76a7260a3d86d292436c987b3c3b3dc61a3a5aa93824f` (kept locally at `data/downloads/`, gitignored).
+- Contents: 12,372 images under `QY_final_dataset/images/`; reconciliation against the 12,372 reference label files: **100% match, zero orphans** (`scripts/prepare_data.py`).
+- Splits (upstream `new_split_yolo`): train 9,897 / val 2,475, disjoint (80/20). The upstream `test.txt` is a 6-image subset of val — dropped as redundant by `prepare_data.py`; **val serves as the held-out eval split** (matches the upstream paper's protocol).
+- Class schema: published 7 classes, unchanged — `person, helmet, self_clothes, safety_clothes, head, blur_head, blur_clothes`.
+
+## Full training run (executed by user, outside session)
+
+From the repo root (`caffeinate` keeps the Mac awake overnight):
+
+```bash
+caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --device mps --name sfchd-y8n
+```
+
+- Measured on the smoke run: ~1 it/s at batch 8, MPS memory ~2.2 GB → estimated
+  15–25 min/epoch + ~1 min val pass, so 25 epochs ≈ 7–10 h. Checkpoints save every
+  epoch; resume after interruption with:
+  `.venv/bin/yolo train resume model=runs/sfchd-y8n/weights/last.pt`
+- Output: `runs/sfchd-y8n/weights/best.pt` (+ `results.csv` per-epoch metrics).
+- Expectation setting (upstream YOLOv8 curves on SFCHD): mAP50 ≈ 0.66 by epoch 15,
+  0.78 took the authors 200 epochs. ~25 epochs should land ≈ 0.68–0.72 mAP50.
+
+**T4 fallback** (if MPS throughput disappoints — free Kaggle/Colab GPU, ~3–4× faster):
+1. Zip `data/sfchd/` (images, labels, train.txt, val.txt, sfchd.yaml) and upload as a
+   private Kaggle dataset (or to Colab storage).
+2. Rewrite the absolute paths for the cloud filesystem, e.g.
+   `sed -i 's|/Users/abhi/dev/ppe-detect/data/sfchd|/kaggle/input/sfchd|g' train.txt val.txt sfchd.yaml`
+3. `pip install ultralytics==8.4.91`, copy `scripts/train.py`, run with
+   `--device 0 --epochs 50 --batch 16`, then download `best.pt` into `runs/sfchd-y8n/weights/`.
 
 ## Key decisions
 

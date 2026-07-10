@@ -5,9 +5,28 @@ from ppe_detect.sfchd import (
     collect_image_stems,
     parse_split_file,
     reconcile,
+    redundant_splits,
     write_dataset_yaml,
     write_split_list,
 )
+
+
+def test_redundant_splits_detects_subset():
+    members = {
+        "train": {"a", "b", "c"},
+        "val": {"d", "e"},
+        "test": {"d"},
+    }
+    assert redundant_splits(members) == ["test"]
+
+
+def test_redundant_splits_none_when_disjoint():
+    members = {"train": {"a"}, "val": {"b"}, "test": {"c"}}
+    assert redundant_splits(members) == []
+
+
+def test_redundant_splits_ignores_empty():
+    assert redundant_splits({"train": {"a"}, "test": set()}) == []
 
 
 def test_class_schema_is_published_sfchd_order():
