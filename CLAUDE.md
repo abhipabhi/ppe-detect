@@ -44,7 +44,7 @@ label files and dataset layout, never modified, and no code is ported from it.
 | 2b | Full training executed by user outside session; then validate `best.pt`, sample detections, publish weights as GitHub release asset | `best.pt` produces PPE-class detections on sample images; release asset live | DONE 2026-07-10 |
 | 3 | Eval harness + CLAHE A/B on darkened split | `results/metrics.md` with mAP50/mAP50-95/per-class from one command | DONE 2026-07-10 |
 | 4 | FastAPI `/detect` demo | `curl -F image=@x.jpg :8000/detect` returns JSON + annotated image; endpoint test green | DONE 2026-07-10 |
-| 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | pending |
+| 5 | README + polish + resume bullets | DoD items 1–8 all pass from fresh clone | DONE 2026-07-11 |
 | 6 (opt) | Dockerfile + CI | `docker run` inference OK; GH Actions green | pending |
 
 ## Dataset record (SFCHD)
@@ -128,6 +128,22 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
 - License posture (user decision 2026-07-10): publish as-is; provenance note on release
   and README weights section — research/evaluation use, dataset uncredited-license caveat
   for commercial users. Code MIT.
+
+## Phase 5 record
+
+- README final: hero (CC0, honest OOD caption) → 4-line quickstart → results → depth
+  (mermaid architecture, per-class + A/B tables, limitations, future work, provenance).
+  Result tables injected from results/metrics.md by `scripts/sync_readme.py` (marked
+  blocks; never hand-typed). WIP banner removed.
+- /detect default JSON verified metadata-only (exact key set asserted in tests).
+- GitHub description + topics set (yolov8, object-detection, ppe-detection, fastapi,
+  pytorch). Resume bullets delivered in the phase report only — not committed.
+- 2026-07-11: parent workspace moved externally from `/Users/abhi/dev` to
+  `/Users/abhi/Desktop/dev` mid-phase. Repo verified intact (git fsck, history, data);
+  venv recreated from pinned requirements at the new path (also validated
+  requirements.txt from scratch). Stale absolute path: `scripts/prepare_data.py`
+  `DEFAULT_REFERENCE` still points at `/Users/abhi/dev/PPE-detection` — pass
+  `--reference` explicitly if that path no longer exists.
 
 ## Key decisions
 

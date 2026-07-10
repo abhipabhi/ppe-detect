@@ -82,6 +82,8 @@ def test_detect_returns_json_payload(client):
     assert body["enhanced"] is False
     assert body["timing"]["inference_ms"] >= 0
     assert body["image"] == {"width": 64, "height": 64}
+    # metadata only — no embedded image bytes unless output=image is requested
+    assert set(body) == {"boxes", "classes", "confidences", "enhanced", "timing", "image"}
 
 
 def test_detect_enhance_auto_flags_dark_image(client):
