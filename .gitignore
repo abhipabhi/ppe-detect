@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# model weights are downloaded or fetched from release assets, never committed
+*.pt
+*.onnx
+
+# datasets and local eval outputs stay out of git
+data/
+runs/
+results/local/
+
+.DS_Store

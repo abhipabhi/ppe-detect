@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ppe-detect"
+version = "0.1.0"
+description = "PPE detection (person / helmet / safety clothing) with YOLOv8 and optional low-light preprocessing"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "ultralytics",
+    "opencv-python",
+    "numpy",
+]
+
+[project.scripts]
+ppe-detect = "ppe_detect.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -m 'not integration'"
+markers = [
+    "integration: full-stack tests that load real model weights (run with -m integration)",
+]
