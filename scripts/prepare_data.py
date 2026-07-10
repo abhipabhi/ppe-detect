@@ -33,7 +33,6 @@ from ppe_detect.sfchd import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REFERENCE = Path("/Users/abhi/dev/PPE-detection/SFCHD-SCALE-main/dataset_SFCHD")
 
 
 def main() -> int:
@@ -41,7 +40,7 @@ def main() -> int:
     parser.add_argument(
         "--reference",
         type=Path,
-        default=DEFAULT_REFERENCE,
+        required=True,
         help="SFCHD reference folder holding labels/ and new_split_yolo/ (read-only)",
     )
     parser.add_argument(

@@ -35,7 +35,7 @@ def parse_result(result) -> list[Detection]:
     boxes = result.boxes
     if boxes is None:
         return detections
-    for cls, conf, xyxy in zip(boxes.cls, boxes.conf, boxes.xyxy):
+    for cls, conf, xyxy in zip(boxes.cls, boxes.conf, boxes.xyxy, strict=True):
         class_id = int(cls)
         coords = tuple(float(v) for v in np.asarray(xyxy).reshape(4))
         detections.append(
@@ -64,7 +64,7 @@ class Detector:
             self._model = YOLO(self.config.weights)
         return self._model
 
-    def load(self) -> "Detector":
+    def load(self) -> Detector:
         """Force model construction now (e.g. at service startup)."""
         _ = self.model
         return self

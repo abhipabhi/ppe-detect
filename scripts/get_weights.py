@@ -11,6 +11,7 @@ if the checksum does not match the recorded value.
 
 from __future__ import annotations
 
+import hashlib
 import ssl
 import sys
 import urllib.request
@@ -18,9 +19,16 @@ from pathlib import Path
 
 import certifi
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ppe_detect.evaluation import sha256_file
+def sha256_file(path: Path) -> str:
+    # stdlib-only on purpose: this script must run before/without the package
+    # (e.g. in the Docker builder stage, which has no OpenCV system libs)
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
 
 WEIGHTS_URL = (
     "https://github.com/abhipabhi/ppe-detect/releases/download/"

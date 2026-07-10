@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from ppe_detect.sfchd import (
     CLASS_NAMES,

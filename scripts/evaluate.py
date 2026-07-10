@@ -91,10 +91,10 @@ def run_val(weights: str, data_yaml: Path, device: str, batch: int):
 
 
 def provenance_block(args, val_list: Path) -> str:
+    import numpy
     import torch
     import ultralytics
 
-    import numpy
     import ppe_detect
 
     val_images = val_list.read_text().split()

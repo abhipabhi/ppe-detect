@@ -2,9 +2,10 @@
 
 PPE detection (person / helmet / safety clothing) with a YOLOv8-family model.
 Clean rebuild of an earlier notebook prototype (stock COCO weights, no trained PPE
-model); everything in this repo is written fresh. The prior project folder at
-`/Users/abhi/dev/PPE-detection/` is reference-only — used solely for the SFCHD
-label files and dataset layout, never modified, and no code is ported from it.
+model); everything in this repo is written fresh. The prior project folder (kept
+outside this repo) is reference-only — used solely for the SFCHD label files and
+dataset layout via `prepare_data.py --reference`, never modified, and no code is
+ported from it.
 
 ## Project spec
 
@@ -75,7 +76,7 @@ caffeinate -dims .venv/bin/python scripts/train.py --epochs 25 --batch 16 --devi
 1. Zip `data/sfchd/` (images, labels, train.txt, val.txt, sfchd.yaml) and upload as a
    private Kaggle dataset (or to Colab storage).
 2. Rewrite the absolute paths for the cloud filesystem, e.g.
-   `sed -i 's|/Users/abhi/dev/ppe-detect/data/sfchd|/kaggle/input/sfchd|g' train.txt val.txt sfchd.yaml`
+   `sed -i "s|<local repo path>/data/sfchd|/kaggle/input/sfchd|g" train.txt val.txt sfchd.yaml`
 3. `pip install ultralytics==8.4.91`, copy `scripts/train.py`, run with
    `--device 0 --epochs 50 --batch 16`, then download `best.pt` into `runs/sfchd-y8n/weights/`.
 

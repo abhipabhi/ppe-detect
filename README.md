@@ -1,5 +1,7 @@
 # ppe-detect
 
+[![ci](https://github.com/abhipabhi/ppe-detect/actions/workflows/ci.yml/badge.svg)](https://github.com/abhipabhi/ppe-detect/actions/workflows/ci.yml)
+
 Detect personal protective equipment — helmets, safety clothing, and the people
 wearing (or not wearing) them — in images, with a YOLOv8n model fine-tuned on the
 SFCHD chemical-plant dataset. CPU inference, a tested CLI, and a FastAPI service.
@@ -18,6 +20,12 @@ python3 -m venv .venv && source .venv/bin/activate && pip install -r requirement
 python scripts/get_weights.py                      # sha256-verified release download
 uvicorn --factory ppe_detect.api:create_app &  \
   curl -F image=@assets/sample.jpg "localhost:8000/detect?enhance=auto"
+```
+
+Or with Docker (weights are fetched and sha256-verified at build time):
+
+```bash
+docker build -t ppe-detect . && docker run -p 8000:8000 ppe-detect
 ```
 
 ## Results
@@ -121,15 +129,16 @@ Weights path override: `PPE_WEIGHTS`.
 ## Reproduce
 
 ```bash
-python scripts/prepare_data.py    # assemble dataset + image/label reconciliation report
+python scripts/prepare_data.py --reference <SFCHD folder with labels/ + new_split_yolo/>
 python scripts/train.py --epochs 25 --batch 16 --device mps --name sfchd-y8n
 python scripts/evaluate.py        # regenerates results/metrics.md (eval + low-light A/B)
 python scripts/sync_readme.py     # copies result tables into this README
 ```
 
-The SFCHD images are downloaded from the dataset authors' public link (see
-`CLAUDE.md` dataset record for URL and archive sha256); `prepare_data.py` verifies
-every image has a matching label file and fails on >2% orphans.
+The SFCHD images come from the dataset authors' public link; archive checksum and
+the full image↔label reconciliation record are in
+[results/data_provenance.md](results/data_provenance.md). `prepare_data.py`
+verifies every image has a matching label file and fails on >2% orphans.
 
 ## Tests
 

@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  TORCH_CPU_INDEX: https://download.pytorch.org/whl/cpu
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (CPU torch)
+        run: |
+          pip install --index-url $TORCH_CPU_INDEX torch==2.13.0 torchvision==0.28.0
+          pip install -r requirements.txt
+          pip install -e . ruff
+      - name: Lint
+        run: ruff check .
+      - name: Tests (stubbed — no weights)
+        run: pytest
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (CPU torch)
+        run: |
+          pip install --index-url $TORCH_CPU_INDEX torch==2.13.0 torchvision==0.28.0
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Fetch release weights (sha256-verified)
+        run: python scripts/get_weights.py
+      - name: Integration tests (real weights)
+        run: pytest -m integration
+      - name: Build Docker image
+        run: docker build -t ppe-detect .
+      - name: Smoke-test the container
+        run: |
+          docker run -d --rm -p 8000:8000 --name ppe ppe-detect
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8000/healthz && break
+            sleep 2
+            [ "$i" = 60 ] && { echo "service never became healthy"; docker logs ppe; exit 1; }
+          done
+          curl -sf http://127.0.0.1:8000/healthz | grep -q ppe-detect-y8n-sfchd.pt
+          curl -sf -F image=@assets/sample.jpg http://127.0.0.1:8000/detect | grep -q '"boxes"'
+          docker stop ppe
